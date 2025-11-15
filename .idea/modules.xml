@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/CodeJam-Project.iml" filepath="$PROJECT_DIR$/CodeJam-Project.iml" />
+      <module fileurl="file://$PROJECT_DIR$/LeaderboardManager/LeaderboardManager.iml" filepath="$PROJECT_DIR$/LeaderboardManager/LeaderboardManager.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ScoreEntry/ScoreEntry.iml" filepath="$PROJECT_DIR$/ScoreEntry/ScoreEntry.iml" />
+    </modules>
+  </component>
+</project>
