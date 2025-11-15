@@ -1,14 +1,22 @@
 
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
-public class keyInput {
+public class keyInput implements KeyListener {
     private tile gameBoard;
 
+    public keyInput(tile start) {
+    }
 
 
     // Constructor takes a reference to the main game logic
     public void GameKeyListener(tile board) {
         this.gameBoard = board;
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+
     }
 
     @Override
@@ -31,4 +39,10 @@ public class keyInput {
                 break;
         }
     }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
+    }
+
 }

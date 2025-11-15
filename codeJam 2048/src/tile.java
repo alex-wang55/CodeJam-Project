@@ -1,3 +1,5 @@
+import java.awt.event.KeyEvent;
+
 public class tile {
     private int x;
     private int y;
@@ -22,5 +24,6 @@ public class tile {
     public void setValue(int value){
         value = value;
     }
+
 }
 

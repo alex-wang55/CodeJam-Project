@@ -1,7 +1,11 @@
 import javax.swing.*;
+import java.awt.event.KeyListener;
 import java.util.Scanner;
 
 public class Main extends JPanel {
+    public Main() {
+        setFocusable(true);
+    }
 
     public static void main(String[] args) {
         Scanner console = new Scanner(System.in);
@@ -20,7 +24,7 @@ public class Main extends JPanel {
 
         // Create panel instance
         Main panel = new Main();
-        panel.addKeyListener(new keyInput(start));
+        panel.addKeyListener((KeyListener) new keyInput(start));
         panel.setFocusable(true);
 
         // Create window
@@ -30,8 +34,8 @@ public class Main extends JPanel {
         frame.setSize(400, 400);
         frame.setVisible(true);
 
-        while(true){
+        //while(true){//
             // game loop (later you should replace this with a timer)
-        }
+        //}
     }
 }
