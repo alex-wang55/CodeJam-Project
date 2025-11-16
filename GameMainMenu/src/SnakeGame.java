@@ -1,14 +1,38 @@
 import java.awt.*;
 import java.awt.event.*;
+import java.io.*;
 import java.util.Random;
 import javax.swing.*;
 
 public class SnakeGame {
+    private static int finalScore = 0;
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            new GameFrame();
+            GameFrame frame = new GameFrame();
+            
+            // Add window listener to detect when game closes
+            frame.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    // Write score to file when window closes
+                    writeScoreToFile(finalScore);
+                }
+            });
         });
+    }
+
+    public static void setFinalScore(int score) {
+        finalScore = score;
+    }
+
+    private static void writeScoreToFile(int score) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter("snake_score.tmp"))) {
+            writer.println(score);
+            System.out.println("Score written to file: " + score);
+        } catch (IOException e) {
+            System.err.println("Error writing score to file: " + e.getMessage());
+        }
     }
 }
 
@@ -28,7 +52,7 @@ class GameFrame extends JFrame {
 class GamePanel extends JPanel implements ActionListener {
     static final int SCREEN_WIDTH = 600;
     static final int SCREEN_HEIGHT = 600;
-    static final int UNIT_SIZE = 75;
+    static final int UNIT_SIZE = 25;
     static final int GAME_UNITS = (SCREEN_WIDTH * SCREEN_HEIGHT) / (UNIT_SIZE * UNIT_SIZE);
     static final int DELAY = 75;
 
@@ -150,25 +174,8 @@ class GamePanel extends JPanel implements ActionListener {
         FontMetrics metrics2 = getFontMetrics(g.getFont());
         g.drawString("Score: " + applesEaten, (SCREEN_WIDTH - metrics2.stringWidth("Score: " + applesEaten)) / 2, g.getFont().getSize() * 2);
         
-        // SUBMIT SCORE TO LEADERBOARD
-        submitScore();
-    }
-    
-    private void submitScore() {
-        if (applesEaten > 0) {
-            SwingUtilities.invokeLater(() -> {
-                String playerName = JOptionPane.showInputDialog(
-                    this, 
-                    "Game Over! Enter your name for the leaderboard:",
-                    "Snake Game - New Score!",
-                    JOptionPane.QUESTION_MESSAGE
-                );
-                
-                if (playerName != null && !playerName.trim().isEmpty()) {
-                    LeaderboardManager.getInstance().addScore(playerName.trim(), "Snake", applesEaten);
-                }
-            });
-        }
+        // Set the final score
+        SnakeGame.setFinalScore(applesEaten);
     }
 
     @Override

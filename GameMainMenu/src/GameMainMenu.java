@@ -1,10 +1,10 @@
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
@@ -28,7 +28,7 @@ public class GameMainMenu extends JFrame {
         setupCardLayout();
         createMainMenu();
         createGamesMenu();
-        createLeaderboardPanel();
+        createHighscoresPanel();
         setupAnimations();
     }
     
@@ -68,13 +68,13 @@ public class GameMainMenu extends JFrame {
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 60, 0));
         
         JButton miniGamesButton = createMenuButton("MINI GAMES");
-        JButton leaderboardButton = createMenuButton("LEADERBOARDS");
+        JButton highscoresButton = createMenuButton("HIGHSCORES");
         JButton optionsButton = createMenuButton("OPTIONS");
         JButton creditsButton = createMenuButton("CREDITS");
         JButton exitButton = createMenuButton("EXIT GAME");
         
         miniGamesButton.addActionListener(e -> showGamesMenu());
-        leaderboardButton.addActionListener(e -> showLeaderboard());
+        highscoresButton.addActionListener(e -> showHighscores());
         optionsButton.addActionListener(e -> showOptions());
         creditsButton.addActionListener(e -> showCredits());
         exitButton.addActionListener(e -> System.exit(0));
@@ -83,7 +83,7 @@ public class GameMainMenu extends JFrame {
         mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         mainPanel.add(miniGamesButton);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
-        mainPanel.add(leaderboardButton);
+        mainPanel.add(highscoresButton);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
         mainPanel.add(optionsButton);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
@@ -114,10 +114,9 @@ public class GameMainMenu extends JFrame {
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 50, 0));
         
-        // Add Flappy Bird button
         JButton snakeButton = createGameButton("SNAKE GAME", "A classic snake game. Eat apples and grow longer!", Color.GREEN);
         JButton game2048Button = createGameButton("2048 PUZZLE", "Slide tiles and combine them to reach 2048!", new Color(255, 165, 0));
-        JButton flappyBirdButton = createGameButton("FLAPPY BIRD", "Click to flap and navigate through pipes!", new Color(135, 206, 250)); // Light blue
+        JButton flappyBirdButton = createGameButton("FLAPPY BIRD", "Click to flap and navigate through pipes!", new Color(135, 206, 250));
         JButton backButton = createMenuButton("BACK TO MAIN MENU");
         
         snakeButton.addActionListener(e -> launchSnakeGame());
@@ -142,167 +141,90 @@ public class GameMainMenu extends JFrame {
         cardPanel.add(centerPanel, "GAMES_MENU");
     }
     
-    private void createLeaderboardPanel() {
-        JPanel leaderboardPanel = new JPanel(new BorderLayout(20, 20));
-        leaderboardPanel.setOpaque(false);
-        leaderboardPanel.setBorder(BorderFactory.createEmptyBorder(40, 60, 40, 60));
+    private void createHighscoresPanel() {
+        JPanel highscoresPanel = new JPanel(new BorderLayout(20, 20));
+        highscoresPanel.setOpaque(false);
+        highscoresPanel.setBorder(BorderFactory.createEmptyBorder(40, 60, 40, 60));
         
-        JLabel titleLabel = createStyledLabel("LEADERBOARDS", 48, TEXT_COLOR, true);
+        JLabel titleLabel = createStyledLabel("HIGHSCORES", 48, TEXT_COLOR, true);
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         
-        JTabbedPane tabbedPane = new JTabbedPane();
-        tabbedPane.setBackground(new Color(255, 255, 255, 30));
-        tabbedPane.setForeground(TEXT_COLOR);
-        tabbedPane.setFont(new Font("Arial", Font.BOLD, 16));
+        // Highscores display panel
+        JPanel scoresPanel = new JPanel();
+        scoresPanel.setOpaque(false);
+        scoresPanel.setLayout(new BoxLayout(scoresPanel, BoxLayout.Y_AXIS));
+        scoresPanel.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
         
-        // Add Flappy Bird leaderboard tab
-        JPanel snakeLeaderboard = createGameLeaderboardPanel("Snake");
-        JPanel game2048Leaderboard = createGameLeaderboardPanel("2048");
-        JPanel flappyBirdLeaderboard = createGameLeaderboardPanel("Flappy Bird");
+        // Create highscore displays for each game
+        JPanel snakeHighscore = createGameHighscorePanel("🐍 Snake", "Snake");
+        JPanel game2048Highscore = createGameHighscorePanel("🔢 2048", "2048");
+        JPanel flappyBirdHighscore = createGameHighscorePanel("🐦 Flappy Bird", "Flappy Bird");
         
-        tabbedPane.addTab("🐍 Snake", snakeLeaderboard);
-        tabbedPane.addTab("🔢 2048", game2048Leaderboard);
-        tabbedPane.addTab("🐦 Flappy Bird", flappyBirdLeaderboard);
+        scoresPanel.add(snakeHighscore);
+        scoresPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        scoresPanel.add(game2048Highscore);
+        scoresPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        scoresPanel.add(flappyBirdHighscore);
         
+        JScrollPane scrollPane = new JScrollPane(scoresPanel);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setPreferredSize(new Dimension(500, 300));
+        
+        // Buttons panel
         JPanel buttonPanel = new JPanel();
         buttonPanel.setOpaque(false);
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 0));
         
         JButton refreshButton = createMenuButton("🔄 REFRESH");
+        JButton resetButton = createMenuButton("🔄 RESET ALL");
         JButton backButton = createMenuButton("BACK TO MAIN MENU");
         
-        refreshButton.addActionListener(e -> refreshLeaderboards());
+        refreshButton.addActionListener(e -> refreshHighscores());
+        resetButton.addActionListener(e -> resetAllHighscores());
         backButton.addActionListener(e -> showMainMenu());
         
         buttonPanel.add(refreshButton);
+        buttonPanel.add(resetButton);
         buttonPanel.add(backButton);
         
-        leaderboardPanel.add(titleLabel, BorderLayout.NORTH);
-        leaderboardPanel.add(tabbedPane, BorderLayout.CENTER);
-        leaderboardPanel.add(buttonPanel, BorderLayout.SOUTH);
+        highscoresPanel.add(titleLabel, BorderLayout.NORTH);
+        highscoresPanel.add(scrollPane, BorderLayout.CENTER);
+        highscoresPanel.add(buttonPanel, BorderLayout.SOUTH);
         
-        cardPanel.add(leaderboardPanel, "LEADERBOARD");
+        cardPanel.add(highscoresPanel, "HIGHSCORES");
     }
-    private JPanel createGameLeaderboardPanel(String gameName) {
-        JPanel panel = new JPanel(new BorderLayout());
+    
+    private JPanel createGameHighscorePanel(String gameTitle, String gameName) {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setOpaque(false);
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(255, 255, 255, 100), 2),
+            BorderFactory.createEmptyBorder(15, 20, 15, 20)
+        ));
         
-        // Get scores from leaderboard manager
-        List<LeaderboardManager.ScoreEntry> scores = LeaderboardManager.getInstance().getTopScores(gameName, 10);
+        JLabel titleLabel = new JLabel(gameTitle);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setForeground(TEXT_COLOR);
         
-        String[] columnNames = {"Rank", "Player", "Score", "Date"};
-        Object[][] data;
+        String highscoreText = LeaderboardManager.getInstance().getHighscoreDisplay(gameName);
+        JLabel scoreLabel = new JLabel(highscoreText);
+        scoreLabel.setFont(new Font("Arial", Font.BOLD, 28));
+        scoreLabel.setForeground(new Color(255, 215, 0)); // Gold color for highscore
         
-        if (scores.isEmpty()) {
-            data = new Object[][]{
-                {"1", "No scores yet!", "-", "-"},
-                {"2", "Play the game to", "see your", "scores here!"},
-                {"3", "", "", ""},
-                {"4", "", "", ""},
-                {"5", "", "", ""},
-                {"6", "", "", ""},
-                {"7", "", "", ""},
-                {"8", "", "", ""},
-                {"9", "", "", ""},
-                {"10", "", "", ""}
-            };
-        } else {
-            data = new Object[scores.size()][4];
-            SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy");
-            
-            for (int i = 0; i < scores.size(); i++) {
-                LeaderboardManager.ScoreEntry entry = scores.get(i);
-                data[i][0] = i + 1;
-                data[i][1] = entry.getPlayerName();
-                data[i][2] = entry.getScore();
-                data[i][3] = dateFormat.format(entry.getDate());
-            }
-        }
+        JButton resetButton = new JButton("Reset");
+        resetButton.setFont(new Font("Arial", Font.PLAIN, 14));
+        resetButton.setBackground(ACCENT_COLOR);
+        resetButton.setForeground(TEXT_COLOR);
+        resetButton.setFocusPainted(false);
+        resetButton.addActionListener(e -> resetGameHighscore(gameName));
         
-        DefaultTableModel model = new DefaultTableModel(data, columnNames) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        
-        JTable table = new JTable(model);
-        
-        // Style the table
-        table.setBackground(new Color(255, 255, 255, 200));
-        table.setForeground(Color.BLACK);
-        table.setFont(new Font("Arial", Font.PLAIN, 14));
-        table.setRowHeight(30);
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        
-        // Style table header
-        table.getTableHeader().setFont(new Font("Arial", Font.BOLD, 16));
-        table.getTableHeader().setBackground(PRIMARY_COLOR);
-        table.getTableHeader().setForeground(TEXT_COLOR);
-        table.getTableHeader().setReorderingAllowed(false);
-        
-        // Style table cells
-        table.setSelectionBackground(SECONDARY_COLOR);
-        table.setSelectionForeground(TEXT_COLOR);
-        table.setGridColor(new Color(200, 200, 200, 100));
-        table.setShowGrid(true);
-        table.setIntercellSpacing(new Dimension(1, 1));
-        
-        // Center align rank and score columns
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        table.getColumnModel().getColumn(0).setCellRenderer(centerRenderer);
-        table.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
-        table.getColumnModel().getColumn(3).setCellRenderer(centerRenderer);
-        
-        // Left align player name column
-        DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
-        leftRenderer.setHorizontalAlignment(SwingConstants.LEFT);
-        table.getColumnModel().getColumn(1).setCellRenderer(leftRenderer);
-        
-        // Set column widths
-        table.getColumnModel().getColumn(0).setPreferredWidth(60);  // Rank
-        table.getColumnModel().getColumn(1).setPreferredWidth(150); // Player
-        table.getColumnModel().getColumn(2).setPreferredWidth(80);  // Score
-        table.getColumnModel().getColumn(3).setPreferredWidth(100); // Date
-        
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setOpaque(false);
-        scrollPane.getViewport().setOpaque(false);
-        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(255, 255, 255, 50), 2));
-        scrollPane.getViewport().setBackground(new Color(255, 255, 255, 150));
-        
-        // Add a title for the game
-        JLabel gameTitle = createStyledLabel(gameName + " Leaderboard", 24, TEXT_COLOR, true);
-        gameTitle.setHorizontalAlignment(SwingConstants.CENTER);
-        gameTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-        
-        panel.add(gameTitle, BorderLayout.NORTH);
-        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(titleLabel, BorderLayout.WEST);
+        panel.add(scoreLabel, BorderLayout.CENTER);
+        panel.add(resetButton, BorderLayout.EAST);
         
         return panel;
-    }
-
-    private void refreshLeaderboards() {
-        // Recreate the leaderboard panel to refresh data
-        createLeaderboardPanel();
-        cardLayout.show(cardPanel, "LEADERBOARD");
-        JOptionPane.showMessageDialog(this, "Leaderboard refreshed!", "Refresh", JOptionPane.INFORMATION_MESSAGE);
-    }
-
-    private void clearLeaderboards() {
-        int choice = JOptionPane.showConfirmDialog(this, 
-            "Are you sure you want to clear ALL leaderboard scores?\nThis action cannot be undone.",
-            "Clear Leaderboards",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.WARNING_MESSAGE);
-        
-        if (choice == JOptionPane.YES_OPTION) {
-            LeaderboardManager.getInstance().clearLeaderboard();
-            refreshLeaderboards();
-            JOptionPane.showMessageDialog(this, "All leaderboard scores have been cleared.", "Cleared", JOptionPane.INFORMATION_MESSAGE);
-        }
     }
     
     private JButton createGameButton(String text, String description, Color accentColor) {
@@ -374,9 +296,37 @@ public class GameMainMenu extends JFrame {
         cardLayout.show(cardPanel, "GAMES_MENU");
     }
     
-    private void showLeaderboard() {
-        createLeaderboardPanel();
-        cardLayout.show(cardPanel, "LEADERBOARD");
+    private void showHighscores() {
+        createHighscoresPanel();
+        cardLayout.show(cardPanel, "HIGHSCORES");
+    }
+    
+    private void refreshHighscores() {
+        showHighscores();
+    }
+    
+    private void resetGameHighscore(String gameName) {
+        int choice = JOptionPane.showConfirmDialog(this,
+            "Reset highscore for " + gameName + "?",
+            "Reset Highscore",
+            JOptionPane.YES_NO_OPTION);
+        
+        if (choice == JOptionPane.YES_OPTION) {
+            LeaderboardManager.getInstance().resetHighscore(gameName);
+            showHighscores(); // Refresh display
+        }
+    }
+    
+    private void resetAllHighscores() {
+        int choice = JOptionPane.showConfirmDialog(this,
+            "Reset ALL highscores? This cannot be undone!",
+            "Reset All Highscores",
+            JOptionPane.YES_NO_OPTION);
+        
+        if (choice == JOptionPane.YES_OPTION) {
+            LeaderboardManager.getInstance().resetAllHighscores();
+            showHighscores(); // Refresh display
+        }
     }
     
     private JLabel createStyledLabel(String text, int fontSize, Color color, boolean bold) {
@@ -502,54 +452,124 @@ public class GameMainMenu extends JFrame {
     }
     
     private void launchSnakeGame() {
-        System.out.println("Launching Snake Game...");
-        try {
-            // Call SnakeGame's main method directly
-            SnakeGame.main(new String[]{});
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, 
-                "Failed to launch Snake Game: " + e.getMessage(),
-                "Error", 
-                JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
+        SwingUtilities.invokeLater(() -> {
+            try {
+                System.out.println("Launching Snake Game...");
+                
+                // Delete any existing score file
+                File scoreFile = new File("snake_score.tmp");
+                if (scoreFile.exists()) {
+                    scoreFile.delete();
+                }
+                
+                // Run SnakeGame as a separate process
+                String javaHome = System.getProperty("java.home");
+                String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
+                String classpath = System.getProperty("java.class.path");
+                String className = "SnakeGame";
+                
+                ProcessBuilder builder = new ProcessBuilder(
+                    javaBin, "-cp", classpath, className
+                );
+                Process process = builder.start();
+                
+                // Monitor the process and read the score when it finishes
+                new Thread(() -> {
+                    try {
+                        int exitCode = process.waitFor();
+                        System.out.println("Snake game process finished with exit code: " + exitCode);
+                        
+                        // Wait a bit for file to be written
+                        Thread.sleep(500);
+                        
+                        // Read the score from file
+                        if (scoreFile.exists()) {
+                            try (BufferedReader reader = new BufferedReader(new FileReader(scoreFile))) {
+                                String scoreLine = reader.readLine();
+                                if (scoreLine != null && !scoreLine.trim().isEmpty()) {
+                                    int score = Integer.parseInt(scoreLine.trim());
+                                    System.out.println("Retrieved score from Snake game: " + score);
+                                    
+                                    // Submit the score to leaderboard
+                                    SwingUtilities.invokeLater(() -> {
+                                        if (score > 0) {
+                                            LeaderboardManager.getInstance().submitScore("Snake", score);
+                                            JOptionPane.showMessageDialog(GameMainMenu.this,
+                                                "Game Over! Your score: " + score + "\nHighscore updated!",
+                                                "Snake Game Result",
+                                                JOptionPane.INFORMATION_MESSAGE);
+                                        }
+                                    });
+                                }
+                            }
+                            // Clean up the temp file
+                            scoreFile.delete();
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error monitoring Snake game process: " + e.getMessage());
+                    }
+                }).start();
+                
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(GameMainMenu.this, 
+                    "Failed to launch Snake Game: " + e.getMessage(),
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        });
     }
 
     private void launch2048Game() {
-        System.out.println("Launching 2048 Game...");
-        try {
-            // Create Game2048_GUI instance directly
-            new Game2048_GUI();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, 
-                "Failed to launch 2048 Game: " + e.getMessage(),
-                "Error", 
-                JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
+        SwingUtilities.invokeLater(() -> {
+            try {
+                System.out.println("Launching 2048 Game...");
+                // Create 2048 game directly
+                Game2048_GUI game2048 = new Game2048_GUI();
+                game2048.setVisible(true);
+                
+                // Bring to front
+                game2048.toFront();
+                game2048.requestFocus();
+                
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(GameMainMenu.this, 
+                    "Failed to launch 2048 Game: " + e.getMessage(),
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        });
     }
-        
+
     private void launchFlappyBirdGame() {
         SwingUtilities.invokeLater(() -> {
             try {
-                // Direct instantiation since it's in the same folder
-                JFrame frame = new JFrame("Flappy Bird");
-                FlappyBird gamePanel = new FlappyBird();
-                frame.add(gamePanel);
-                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                frame.setResizable(false);
-                frame.pack();
-                frame.setLocationRelativeTo(null);
-                frame.setVisible(true);
+                System.out.println("Launching Flappy Bird Game...");
+                // Create Flappy Bird directly
+                JFrame flappyFrame = new JFrame("Flappy Bird");
+                FlappyBird flappyPanel = new FlappyBird();
+                flappyFrame.add(flappyPanel);
+                flappyFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                flappyFrame.setResizable(false);
+                flappyFrame.pack();
+                flappyFrame.setLocationRelativeTo(null);
+                flappyFrame.setVisible(true);
+                
+                // Bring to front
+                flappyFrame.toFront();
+                flappyFrame.requestFocus();
+                
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(GameMainMenu.this, 
                     "Failed to launch Flappy Bird Game: " + e.getMessage(),
                     "Error", 
                     JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
             }
         });
     }
-
+    
     private void showOptions() {
         JOptionPane.showMessageDialog(this, 
             "Game Options:\n\n" +
@@ -567,7 +587,8 @@ public class GameMainMenu extends JFrame {
             "Developed by: Your Team\n\n" +
             "Games Included:\n" +
             "- Snake Game\n" +
-            "- 2048 Puzzle\n\n" +
+            "- 2048 Puzzle\n" +
+            "- Flappy Bird\n\n" +
             "Thanks for playing!", 
             "Credits", 
             JOptionPane.INFORMATION_MESSAGE);

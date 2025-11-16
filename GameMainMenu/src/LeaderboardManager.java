@@ -5,40 +5,37 @@ public class LeaderboardManager {
     public static class ScoreEntry implements Serializable, Comparable<ScoreEntry> {
         private static final long serialVersionUID = 1L;
         
-        private String playerName;
         private String gameName;
         private int score;
         private Date date;
         
-        public ScoreEntry(String playerName, String gameName, int score) {
-            this.playerName = playerName;
+        public ScoreEntry(String gameName, int score) {
             this.gameName = gameName;
             this.score = score;
             this.date = new Date();
         }
         
-        public String getPlayerName() { return playerName; }
         public String getGameName() { return gameName; }
         public int getScore() { return score; }
         public Date getDate() { return date; }
         
         @Override
         public int compareTo(ScoreEntry other) {
-            return Integer.compare(other.score, this.score);
+            return Integer.compare(other.score, this.score); // Higher scores first
         }
         
         @Override
         public String toString() {
-            return String.format("%s: %d points (%s)", playerName, score, date);
+            return String.format("%s: %d points (%s)", gameName, score, date);
         }
     }
     
-    private static final String LEADERBOARD_FILE = "leaderboard.dat";
+    private static final String LEADERBOARD_FILE = "highscores.dat";
     private static LeaderboardManager instance;
-    private List<ScoreEntry> scores;
+    private List<ScoreEntry> highscores;
     
     private LeaderboardManager() {
-        scores = loadScores();
+        highscores = loadHighscores();
     }
     
     public static LeaderboardManager getInstance() {
@@ -48,44 +45,88 @@ public class LeaderboardManager {
         return instance;
     }
     
-    public void addScore(String playerName, String gameName, int score) {
-        if (playerName != null && !playerName.trim().isEmpty() && score > 0) {
-            ScoreEntry entry = new ScoreEntry(playerName.trim(), gameName, score);
-            scores.add(entry);
-            Collections.sort(scores);
-            saveScores();
-            System.out.println("Score added to leaderboard: " + entry);
+    /**
+     * Submit a score - automatically tracks only the highest score per game
+     */
+    public void submitScore(String gameName, int score) {
+        if (score > 0) {
+            // Check if we already have a highscore for this game
+            ScoreEntry currentHighscore = getHighscore(gameName);
+            
+            // Only update if this score is higher than current highscore
+            if (currentHighscore == null || score > currentHighscore.getScore()) {
+                // Remove old highscore if it exists
+                if (currentHighscore != null) {
+                    highscores.remove(currentHighscore);
+                }
+                
+                // Add new highscore
+                ScoreEntry newHighscore = new ScoreEntry(gameName, score);
+                highscores.add(newHighscore);
+                Collections.sort(highscores);
+                saveHighscores();
+                
+                System.out.println("New highscore for " + gameName + ": " + score + " points!");
+            } else {
+                System.out.println("Score " + score + " for " + gameName + " (current highscore: " + currentHighscore.getScore() + ")");
+            }
         }
     }
     
-    public List<ScoreEntry> getTopScores(String gameName, int limit) {
-        List<ScoreEntry> gameScores = new ArrayList<>();
-        for (ScoreEntry entry : scores) {
+    /**
+     * Get the current highscore for a specific game
+     */
+    public ScoreEntry getHighscore(String gameName) {
+        for (ScoreEntry entry : highscores) {
             if (entry.getGameName().equals(gameName)) {
-                gameScores.add(entry);
+                return entry;
             }
         }
-        Collections.sort(gameScores);
-        return gameScores.size() > limit ? gameScores.subList(0, limit) : gameScores;
+        return null; // No highscore yet for this game
     }
     
-    public List<ScoreEntry> getTopScores(String gameName) {
-        return getTopScores(gameName, 10);
+    /**
+     * Get all highscores (one per game)
+     */
+    public List<ScoreEntry> getAllHighscores() {
+        return new ArrayList<>(highscores);
     }
     
-    public List<ScoreEntry> getPlayerScores(String playerName) {
-        List<ScoreEntry> playerScores = new ArrayList<>();
-        for (ScoreEntry entry : scores) {
-            if (entry.getPlayerName().equals(playerName)) {
-                playerScores.add(entry);
-            }
+    /**
+     * Get formatted highscore display for a specific game
+     */
+    public String getHighscoreDisplay(String gameName) {
+        ScoreEntry highscore = getHighscore(gameName);
+        if (highscore != null) {
+            return highscore.getScore() + " points";
+        } else {
+            return "No highscore yet!";
         }
-        Collections.sort(playerScores);
-        return playerScores;
+    }
+    
+    /**
+     * Reset highscore for a specific game
+     */
+    public void resetHighscore(String gameName) {
+        ScoreEntry highscore = getHighscore(gameName);
+        if (highscore != null) {
+            highscores.remove(highscore);
+            saveHighscores();
+            System.out.println("Highscore reset for " + gameName);
+        }
+    }
+    
+    /**
+     * Reset all highscores
+     */
+    public void resetAllHighscores() {
+        highscores.clear();
+        saveHighscores();
+        System.out.println("All highscores reset!");
     }
     
     @SuppressWarnings("unchecked")
-    private List<ScoreEntry> loadScores() {
+    private List<ScoreEntry> loadHighscores() {
         File file = new File(LEADERBOARD_FILE);
         if (!file.exists()) {
             return new ArrayList<>();
@@ -94,21 +135,16 @@ public class LeaderboardManager {
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
             return (List<ScoreEntry>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Could not load leaderboard, starting fresh: " + e.getMessage());
+            System.out.println("Could not load highscores, starting fresh: " + e.getMessage());
             return new ArrayList<>();
         }
     }
     
-    private void saveScores() {
+    private void saveHighscores() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(LEADERBOARD_FILE))) {
-            oos.writeObject(scores);
+            oos.writeObject(highscores);
         } catch (IOException e) {
-            System.out.println("Error saving leaderboard: " + e.getMessage());
+            System.out.println("Error saving highscores: " + e.getMessage());
         }
-    }
-    
-    public void clearLeaderboard() {
-        scores.clear();
-        saveScores();
     }
 }
