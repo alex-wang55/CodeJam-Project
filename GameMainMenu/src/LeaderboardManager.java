@@ -1,5 +1,4 @@
 import java.io.*;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class LeaderboardManager {
@@ -25,14 +24,12 @@ public class LeaderboardManager {
         
         @Override
         public int compareTo(ScoreEntry other) {
-            // Higher scores first - compare other to this for descending order
             return Integer.compare(other.score, this.score);
         }
         
         @Override
         public String toString() {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy HH:mm");
-            return String.format("%s: %d points (%s)", playerName, score, dateFormat.format(date));
+            return String.format("%s: %d points (%s)", playerName, score, date);
         }
     }
     
@@ -58,8 +55,6 @@ public class LeaderboardManager {
             Collections.sort(scores);
             saveScores();
             System.out.println("Score added to leaderboard: " + entry);
-        } else {
-            System.out.println("Invalid score entry - name: '" + playerName + "', score: " + score);
         }
     }
     
@@ -78,31 +73,28 @@ public class LeaderboardManager {
         return getTopScores(gameName, 10);
     }
     
-    public List<ScoreEntry> getAllScores() {
-        return new ArrayList<>(scores);
+    public List<ScoreEntry> getPlayerScores(String playerName) {
+        List<ScoreEntry> playerScores = new ArrayList<>();
+        for (ScoreEntry entry : scores) {
+            if (entry.getPlayerName().equals(playerName)) {
+                playerScores.add(entry);
+            }
+        }
+        Collections.sort(playerScores);
+        return playerScores;
     }
     
     @SuppressWarnings("unchecked")
     private List<ScoreEntry> loadScores() {
         File file = new File(LEADERBOARD_FILE);
         if (!file.exists()) {
-            System.out.println("Leaderboard file not found, creating new one.");
             return new ArrayList<>();
         }
         
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-            Object loaded = ois.readObject();
-            if (loaded instanceof List) {
-                List<ScoreEntry> loadedScores = (List<ScoreEntry>) loaded;
-                System.out.println("Leaderboard loaded successfully with " + loadedScores.size() + " entries");
-                return loadedScores;
-            } else {
-                System.out.println("Invalid leaderboard file format");
-                return new ArrayList<>();
-            }
+            return (List<ScoreEntry>) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
             System.out.println("Could not load leaderboard, starting fresh: " + e.getMessage());
-            e.printStackTrace();
             return new ArrayList<>();
         }
     }
@@ -110,49 +102,13 @@ public class LeaderboardManager {
     private void saveScores() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(LEADERBOARD_FILE))) {
             oos.writeObject(scores);
-            System.out.println("Leaderboard saved with " + scores.size() + " entries");
         } catch (IOException e) {
             System.out.println("Error saving leaderboard: " + e.getMessage());
-            e.printStackTrace();
         }
     }
     
     public void clearLeaderboard() {
         scores.clear();
         saveScores();
-        System.out.println("Leaderboard cleared");
-    }
-    
-    public void clearGameLeaderboard(String gameName) {
-        scores.removeIf(entry -> entry.getGameName().equals(gameName));
-        saveScores();
-        System.out.println("Leaderboard cleared for game: " + gameName);
-    }
-    
-    // For debugging
-    public void printAllScores() {
-        System.out.println("=== ALL SCORES IN LEADERBOARD ===");
-        if (scores.isEmpty()) {
-            System.out.println("No scores yet!");
-        } else {
-            for (ScoreEntry entry : scores) {
-                System.out.println(entry);
-            }
-        }
-        System.out.println("=================================");
-    }
-    
-    // For debugging specific game
-    public void printGameScores(String gameName) {
-        System.out.println("=== SCORES FOR " + gameName.toUpperCase() + " ===");
-        List<ScoreEntry> gameScores = getTopScores(gameName);
-        if (gameScores.isEmpty()) {
-            System.out.println("No scores yet for " + gameName);
-        } else {
-            for (ScoreEntry entry : gameScores) {
-                System.out.println(entry);
-            }
-        }
-        System.out.println("=================================");
     }
 }

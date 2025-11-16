@@ -114,12 +114,15 @@ public class GameMainMenu extends JFrame {
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 50, 0));
         
+        // Add Flappy Bird button
         JButton snakeButton = createGameButton("SNAKE GAME", "A classic snake game. Eat apples and grow longer!", Color.GREEN);
         JButton game2048Button = createGameButton("2048 PUZZLE", "Slide tiles and combine them to reach 2048!", new Color(255, 165, 0));
+        JButton flappyBirdButton = createGameButton("FLAPPY BIRD", "Click to flap and navigate through pipes!", new Color(135, 206, 250)); // Light blue
         JButton backButton = createMenuButton("BACK TO MAIN MENU");
         
         snakeButton.addActionListener(e -> launchSnakeGame());
         game2048Button.addActionListener(e -> launch2048Game());
+        flappyBirdButton.addActionListener(e -> launchFlappyBirdGame());
         backButton.addActionListener(e -> showMainMenu());
         
         gamesPanel.add(titleLabel);
@@ -127,6 +130,8 @@ public class GameMainMenu extends JFrame {
         gamesPanel.add(snakeButton);
         gamesPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         gamesPanel.add(game2048Button);
+        gamesPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        gamesPanel.add(flappyBirdButton);
         gamesPanel.add(Box.createRigidArea(new Dimension(0, 40)));
         gamesPanel.add(backButton);
         
@@ -150,40 +155,26 @@ public class GameMainMenu extends JFrame {
         tabbedPane.setForeground(TEXT_COLOR);
         tabbedPane.setFont(new Font("Arial", Font.BOLD, 16));
         
-        // Create leaderboard panels for each game
+        // Add Flappy Bird leaderboard tab
         JPanel snakeLeaderboard = createGameLeaderboardPanel("Snake");
         JPanel game2048Leaderboard = createGameLeaderboardPanel("2048");
+        JPanel flappyBirdLeaderboard = createGameLeaderboardPanel("Flappy Bird");
         
         tabbedPane.addTab("🐍 Snake", snakeLeaderboard);
         tabbedPane.addTab("🔢 2048", game2048Leaderboard);
-        
-        // Style the tabbed pane
-        tabbedPane.setUI(new javax.swing.plaf.basic.BasicTabbedPaneUI() {
-            @Override
-            protected void paintTabBorder(Graphics g, int tabPlacement, int tabIndex, int x, int y, int w, int h, boolean isSelected) {
-                // Custom tab border
-            }
-            
-            @Override
-            protected void paintContentBorder(Graphics g, int tabPlacement, int selectedIndex) {
-                // Custom content border
-            }
-        });
+        tabbedPane.addTab("🐦 Flappy Bird", flappyBirdLeaderboard);
         
         JPanel buttonPanel = new JPanel();
         buttonPanel.setOpaque(false);
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 0));
         
         JButton refreshButton = createMenuButton("🔄 REFRESH");
-        JButton clearButton = createMenuButton("🗑️ CLEAR ALL");
         JButton backButton = createMenuButton("BACK TO MAIN MENU");
         
         refreshButton.addActionListener(e -> refreshLeaderboards());
-        clearButton.addActionListener(e -> clearLeaderboards());
         backButton.addActionListener(e -> showMainMenu());
         
         buttonPanel.add(refreshButton);
-        buttonPanel.add(clearButton);
         buttonPanel.add(backButton);
         
         leaderboardPanel.add(titleLabel, BorderLayout.NORTH);
@@ -192,7 +183,6 @@ public class GameMainMenu extends JFrame {
         
         cardPanel.add(leaderboardPanel, "LEADERBOARD");
     }
-
     private JPanel createGameLeaderboardPanel(String gameName) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(false);
@@ -539,6 +529,27 @@ public class GameMainMenu extends JFrame {
         }
     }
         
+    private void launchFlappyBirdGame() {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                // Direct instantiation since it's in the same folder
+                JFrame frame = new JFrame("Flappy Bird");
+                FlappyBird gamePanel = new FlappyBird();
+                frame.add(gamePanel);
+                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                frame.setResizable(false);
+                frame.pack();
+                frame.setLocationRelativeTo(null);
+                frame.setVisible(true);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(GameMainMenu.this, 
+                    "Failed to launch Flappy Bird Game: " + e.getMessage(),
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+    }
+
     private void showOptions() {
         JOptionPane.showMessageDialog(this, 
             "Game Options:\n\n" +

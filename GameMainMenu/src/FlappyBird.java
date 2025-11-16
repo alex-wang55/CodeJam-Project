@@ -1,23 +1,15 @@
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
-// Import statements for image handling
 import javax.imageio.ImageIO;
-import java.io.File;
-import java.io.IOException;
-import java.awt.Image; // Explicit import for clarity
+import javax.swing.*;
 
 /**
  * A simple Flappy Bird clone created in a single Java file using Swing.
- *
- * How to play:
- * - Click the mouse to "flap" the bird and jump.
- * - Avoid the green pipes.
- * - Touching a pipe or the ground is game over.
  */
 public class FlappyBird extends JPanel implements ActionListener, MouseListener {
 
@@ -69,19 +61,38 @@ public class FlappyBird extends JPanel implements ActionListener, MouseListener 
         random = new Random();
         gameLoop = new Timer(16, this); // 16ms delay = ~60 FPS
 
-        // *** NEW: Load the bird image ***
-        try {
-            // This assumes the image file is in the same directory as the
-            // compiled .class file or where the program is run from.
-            birdImage = ImageIO.read(new File("image_83f9c7.png"));
-        } catch (IOException e) {
-            System.err.println("Error loading bird image!");
-            e.printStackTrace();
-            // birdImage will be null, and a fallback rectangle will be drawn
-        }
+        // *** SIMPLIFIED: Load the bird image from parent directory ***
+        birdImage = loadBirdImage();
 
         // Initialize game state
         resetGame();
+    }
+
+    /**
+     * Try to load the bird image from the parent directory
+     */
+    private Image loadBirdImage() {
+        try {
+            // Since FlappyBird.java is in GameMainMenu/src/, go up one level to find the image
+            File imageFile = new File("image_83f9c7.png");
+            if (imageFile.exists()) {
+                System.out.println("Found bird image at: " + imageFile.getAbsolutePath());
+                return ImageIO.read(imageFile);
+            }
+            
+            // Also try current directory in case image is copied there
+            imageFile = new File("image_83f9c7.png");
+            if (imageFile.exists()) {
+                System.out.println("Found bird image in current directory");
+                return ImageIO.read(imageFile);
+            }
+            
+        } catch (IOException e) {
+            System.err.println("Error loading bird image: " + e.getMessage());
+        }
+
+        System.err.println("Could not load bird image. Using fallback yellow rectangle.");
+        return null;
     }
 
     /**
@@ -119,9 +130,6 @@ public class FlappyBird extends JPanel implements ActionListener, MouseListener 
         repaint();
     }
 
-    /**
-     * Updates the game state (bird position, pipes, collisions).
-     */
     /**
      * Updates the game state (bird position, pipes, collisions).
      */
@@ -165,23 +173,46 @@ public class FlappyBird extends JPanel implements ActionListener, MouseListener 
         // Check for ground collision
         if (bird.y + bird.height > SCREEN_HEIGHT) {
             gameOver = true;
+            submitScore();
         }
 
         // Check for pipe collisions
         for (Rectangle pipe : topPipes) {
             if (bird.intersects(pipe)) {
                 gameOver = true;
+                submitScore();
             }
         }
         for (Rectangle pipe : bottomPipes) {
             if (bird.intersects(pipe)) {
                 gameOver = true;
+                submitScore();
             }
         }
 
         // Stop the game loop if game over
         if (gameOver) {
             gameLoop.stop();
+        }
+    }
+
+    /**
+     * SUBMIT SCORE TO LEADERBOARD
+     */
+    private void submitScore() {
+        if (score > 0) {
+            SwingUtilities.invokeLater(() -> {
+                String playerName = JOptionPane.showInputDialog(
+                    this, 
+                    "Game Over! Enter your name for the leaderboard:",
+                    "Flappy Bird - New Score!",
+                    JOptionPane.QUESTION_MESSAGE
+                );
+                
+                if (playerName != null && !playerName.trim().isEmpty()) {
+                    LeaderboardManager.getInstance().addScore(playerName.trim(), "Flappy Bird", score);
+                }
+            });
         }
     }
 
@@ -224,7 +255,6 @@ public class FlappyBird extends JPanel implements ActionListener, MouseListener 
             g.setColor(Color.YELLOW);
             g.fillRect(bird.x, bird.y, bird.width, bird.height);
         }
-
 
         // --- 3. Draw Score & Game State Messages ---
         g.setColor(Color.WHITE);
@@ -279,7 +309,7 @@ public class FlappyBird extends JPanel implements ActionListener, MouseListener 
         frame.add(gamePanel);
 
         // Standard window setup
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setResizable(false);
         frame.pack(); // Sizes the window to fit the preferred size of the panel
         frame.setLocationRelativeTo(null); // Centers the window
