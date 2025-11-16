@@ -82,26 +82,14 @@ public class Game2048_GUI extends JFrame {
         String message = gameOver ? "Game Over!" : "You Win!";
         String title = gameOver ? "Game Over" : "Congratulations!";
         
-        // SUBMIT SCORE TO LEADERBOARD
+        // Automatically submit score without asking for name
         if (score > 0) {
-            String playerName = JOptionPane.showInputDialog(
-                this, 
-                message + "\nYour final score is: " + score + "\n\nEnter your name for the leaderboard:",
-                title,
-                JOptionPane.QUESTION_MESSAGE
-            );
-            
-            if (playerName != null && !playerName.trim().isEmpty()) {
-                LeaderboardManager.getInstance().addScore(playerName.trim(), "2048", score);
-            }
-        } else {
-            JOptionPane.showMessageDialog(this, 
-                message + "\nYour final score is: " + score + "\n\nPlay Again?",
-                title,
-                JOptionPane.INFORMATION_MESSAGE);
+            LeaderboardManager.getInstance().submitScore("2048", score);
         }
         
-        int choice = JOptionPane.showConfirmDialog(this, "Play Again?", title, JOptionPane.YES_NO_OPTION);
+        int choice = JOptionPane.showConfirmDialog(this, 
+            message + "\nYour score: " + score + "\n\nPlay Again?", 
+            title, JOptionPane.YES_NO_OPTION);
         if (choice == JOptionPane.YES_OPTION) initializeGame();
     }
 

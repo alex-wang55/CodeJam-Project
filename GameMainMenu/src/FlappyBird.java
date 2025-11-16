@@ -197,22 +197,12 @@ public class FlappyBird extends JPanel implements ActionListener, MouseListener 
     }
 
     /**
-     * SUBMIT SCORE TO LEADERBOARD
+     * SUBMIT SCORE TO HIGHSCORE SYSTEM
      */
     private void submitScore() {
         if (score > 0) {
-            SwingUtilities.invokeLater(() -> {
-                String playerName = JOptionPane.showInputDialog(
-                    this, 
-                    "Game Over! Enter your name for the leaderboard:",
-                    "Flappy Bird - New Score!",
-                    JOptionPane.QUESTION_MESSAGE
-                );
-                
-                if (playerName != null && !playerName.trim().isEmpty()) {
-                    LeaderboardManager.getInstance().addScore(playerName.trim(), "Flappy Bird", score);
-                }
-            });
+            // Automatically submit score without asking for name
+            LeaderboardManager.getInstance().submitScore("Flappy Bird", score);
         }
     }
 
